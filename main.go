@@ -3,9 +3,8 @@ package main
 import "fmt"
 
 func main() {
-	pk, _ := GetPublicKey()
-	pubKey := pk.PublicKey.Bytes()
+	pk, _ := Init()
 
-	fmt.Println("pubkey: ", pubKey)
-	fmt.Println("pubkey len: ", len(pubKey))
+	fmt.Println("pubkey: ", pk.Bytes())
+	fmt.Println("pubkey len: ", len(pk.Bytes()))
 }
