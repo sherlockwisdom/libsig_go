@@ -14,8 +14,11 @@ func Init() (x25519.PublicKey, error) {
 }
 
 func Agree(peerPublicKeyRaw, privateKeyRaw []byte) []byte {
-	peerPublicKey = publicKey.SetBytes(peerPublicKeyRaw)
-	privateKey = privateKey.SetBytes(privateKeyRaw)
+	var peerPublicKey x25519.PublicKey 
+	var privateKey x25519.PrivateKey 
 
-	return privateKey.Shared(peerPublicKey)
+	peerPublicKey.SetBytes(peerPublicKeyRaw)
+	privateKey.SetBytes(privateKeyRaw)
+
+	return privateKey.Shared(&peerPublicKey)
 }
