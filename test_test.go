@@ -33,6 +33,31 @@ func TestSK(t *testing.T) {
 	}
 }
 
+func TestHeadersEncodeDecode(t *testing.T) {
+	DH := make([]byte, 32)
+	rand.Read(DH)
+
+	header := Headers {
+		DH,
+		0,
+		0,
+	}
+
+	serializedHeader, err := SerializeProtocols(header)
+	if err != nil {
+		t.Errorf("Error serializing header: %s", err)
+	}
+
+	deserializedHeader, err := DeserializeProtocols[Headers](serializedHeader)
+	if err != nil {
+		t.Errorf("Error deserializing header: %s", err)
+	}
+
+	if reflect.DeepEqual(deserializedHeader, header) == false {
+		t.Errorf("Headers do not match...")
+	}
+}
+
 func TestStatesEncodeDecode(t *testing.T) {
 	DHs := make([]byte, 32)
 	rand.Read(DHs)
@@ -69,12 +94,12 @@ func TestStatesEncodeDecode(t *testing.T) {
 		MKSKIPPED,
 	}
 
-	serializedState, err := SerializeStates(state)
+	serializedState, err := SerializeProtocols(state)
 	if err != nil {
 		t.Errorf("Error serializing: %s", err)
 	}
 
-	deserializedState, err := DeserializeStates(serializedState)
+	deserializedState, err := DeserializeProtocols[States](serializedState)
 	if err != nil {
 		t.Errorf("Error deserializing: %s", err)
 	}
@@ -83,5 +108,11 @@ func TestStatesEncodeDecode(t *testing.T) {
 		t.Errorf("States do not match...")
 	}
 
-	fmt.Printf("%d\n", serializedState)
+	deserializedState.Ns = state.Ns + 1
+
+	if reflect.DeepEqual(deserializedState, state) {
+		t.Errorf("States match when should not: wanted Ns:=%d, got Ns:=%d", state.Ns, deserializedState.Ns)
+	}
+
+	// fmt.Printf("%d\n", serializedState)
 }

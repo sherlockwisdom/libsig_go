@@ -5,6 +5,12 @@ import (
 	"encoding/gob"
 )
 
+type Headers struct {
+	DH []byte
+	PN int
+	N int
+}
+
 type States struct {
 	DHs []byte 
 	DHr []byte
@@ -21,31 +27,24 @@ type States struct {
 	MKSKIPPED map[string]int
 }
 
-func SerializeStates(state States) (bytes.Buffer, error) {
-	var buffer bytes.Buffer
-	enc := gob.NewEncoder(&buffer)
+type Protocol interface {
+	Headers | States
+}
 
-	state = States{
-		state.DHs,
-		state.DHr,
-		state.RK,
-		state.CKs,
-		state.CKr,
-		state.Ns,
-		state.Nr,
-		state.PN,
-		state.MKSKIPPED,
-	}
-	err := enc.Encode(state)
+func SerializeProtocols[V Protocol](protocol V) (bytes.Buffer, error) {
+	var buffer bytes.Buffer
+
+	enc := gob.NewEncoder(&buffer)
+	err := enc.Encode(protocol)
 
 	return buffer, err
 }
 
-func DeserializeStates(statesBuffer bytes.Buffer) (States, error) {
-	dec := gob.NewDecoder(&statesBuffer)
+func DeserializeProtocols[V Protocol](buffer bytes.Buffer) (V, error) {
+	dec := gob.NewDecoder(&buffer)
 
-	var states States
-	err := dec.Decode(&states)
+	var protocol V
+	err := dec.Decode(&protocol)
 
-	return states, err
+	return protocol, err
 }
