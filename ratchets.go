@@ -4,7 +4,6 @@ import (
 	"io"
 	"crypto/sha512"
 	"golang.org/x/crypto/hkdf"
-	"maze.io/x/crypto/x25519"
 )
 
 func AliceInit(
@@ -25,9 +24,9 @@ func AliceInit(
 func BobInit() {
 }
 
-func GENERATE_DH() x25519.PrivateKey {
+func GENERATE_DH() []byte {
 	pk := KeypairInit()
-	return pk
+	return pk.Bytes()
 }
 
 func KDF_RK(RK, DHOut []byte) ([]byte, []byte) {
@@ -50,7 +49,7 @@ func KDF_RK(RK, DHOut []byte) ([]byte, []byte) {
 	return rk, ck
 }
 
-func DH(privKey x25519.PrivateKey, pubKey []byte) []byte {
+func DH(privKey []byte, pubKey []byte) []byte {
 	return KeypairAgree(privKey, pubKey)
 }
 

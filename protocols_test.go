@@ -16,8 +16,8 @@ func TestSK(t *testing.T) {
 		t.Errorf("PK are equal: got %d, %d", pk.Bytes(), pk1.Bytes())
 	}
 
-	sk := KeypairAgree(pk, pk1.PublicKey.Bytes())
-	sk1 := KeypairAgree(pk1, pk.PublicKey.Bytes())
+	sk := KeypairAgree(pk.Bytes(), pk1.PublicKey.Bytes())
+	sk1 := KeypairAgree(pk1.Bytes(), pk.PublicKey.Bytes())
 
 	if bytes.Equal(sk, sk1) == false {
 		t.Errorf("SK not equal: got %s, want: %s", sk, sk1)
@@ -50,11 +50,8 @@ func TestHeadersEncodeDecode(t *testing.T) {
 }
 
 func TestStatesEncodeDecode(t *testing.T) {
-	/*
 	DHs := make([]byte, 32)
 	rand.Read(DHs)
-	*/
-	DHs := KeypairInit()
 
 	DHr := make([]byte, 32)
 	rand.Read(DHr)

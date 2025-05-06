@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"maze.io/x/crypto/x25519"
 )
 
 type Headers struct {
@@ -13,7 +12,7 @@ type Headers struct {
 }
 
 type States struct {
-	DHs x25519.PrivateKey
+	DHs []byte
 	DHr []byte
 
 	RK []byte

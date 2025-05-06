@@ -23,11 +23,12 @@ func KeypairGetPublicKey(privateKey []byte) []byte {
 }
 
 
-// func Agree(peerPublicKeyRaw, privateKeyRaw []byte) [32]byte { // If needed in arrays not slices
-func KeypairAgree(privateKey x25519.PrivateKey, peerPublicKeyRaw []byte) []byte {
+func KeypairAgree(privateKeyRaw, peerPublicKeyRaw []byte) []byte {
 	var peerPublicKey x25519.PublicKey 
 	peerPublicKey.SetBytes(peerPublicKeyRaw)
 
+	var privateKey x25519.PrivateKey
+	privateKey.SetBytes(privateKeyRaw)
 	skSlice := privateKey.Shared(&peerPublicKey)
 
 	// return *(*[32]byte)(skSlice) // return in arrays not slices
