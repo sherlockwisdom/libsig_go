@@ -39,13 +39,14 @@ func TestHeadersEncodeDecode(t *testing.T) {
 		t.Errorf("Error serializing header: %s", err)
 	}
 
-	var header1 Headers
-	err = header1.Deserialize(serializedHeader)
+	header1 = Headers{}
+	header1, err = header1.Deserialize(serializedHeader)
 	if err != nil {
 		t.Errorf("Error deserializing header: %s", err)
 	}
 
 	if reflect.DeepEqual(header1, header) == false {
+		// t.Errorf("Headers do not match: wanted: %d, got: %d", header.(Headers).Dh, header1.(Headers).Dh)
 		t.Errorf("Headers do not match: wanted: %d, got: %d", header.Dh, header1.Dh)
 	}
 }
@@ -74,7 +75,7 @@ func TestStatesEncodeDecode(t *testing.T) {
 	MKSKIPPED = make(map[string]int)
 	MKSKIPPED[PK] = 0
 
-	state := States{
+	var state ProtocolStates = States{
 		DHs,
 		DHr,
 		RK,
@@ -91,7 +92,7 @@ func TestStatesEncodeDecode(t *testing.T) {
 		t.Errorf("Error serializing: %s", err)
 	}
 
-	var state1 States
+	var state1 ProtocolStates
 	err = state1.Deserialize(serializedState)
 	if err != nil {
 		t.Errorf("Error deserializing: %s", err)
