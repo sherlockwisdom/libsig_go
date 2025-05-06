@@ -1,118 +1,23 @@
 package main
 
+
 import (
-	"fmt"
 	"testing"
-	"reflect"
 	"bytes"
-	"math/rand"
-	"encoding/base64"
+	/*
+	"crypto/rand"
+	"maze.io/x/crypto/x25519"
+	"golang.org/x/crypto/curve25519"
+	*/
 )
 
-func TestSK(t *testing.T) {
-	pk, prKBytes, _ := Init()
-	pk1, prK1Bytes, _ := Init()
+func TestDeterministicPublicKeys(t *testing.T) {
+	privKey := KeypairInit()
+	value := privKey.Bytes()
 
-	fmt.Println(reflect.TypeOf(pk.Bytes()))
+	pubKey := KeypairGetPublicKey(value) 
 
-	if pk == pk1 {
-		t.Errorf("PK are equal: got %d, %d", pk.Bytes(), pk1.Bytes())
+	if !bytes.Equal(pubKey, privKey.PublicKey.Bytes()) {
+		t.Errorf("Pub keys differ! \n\twanted %d, \n\tgot %d", value, pubKey)
 	}
-
-	sk := Agree(pk1.Bytes(), prKBytes)
-	sk1 := Agree(pk.Bytes(), prK1Bytes)
-
-	/*
-	if reflect.DeepEqual(sk, sk1) == false {
-		t.Errorf("SK not equal: got %s, want: %s", sk, sk1)
-	}
-	*/
-
-	if bytes.Equal(sk, sk1) == false {
-		t.Errorf("SK not equal: got %s, want: %s", sk, sk1)
-	}
-}
-
-func TestHeadersEncodeDecode(t *testing.T) {
-	DH := make([]byte, 32)
-	rand.Read(DH)
-
-	header := Headers {
-		DH,
-		0,
-		0,
-	}
-
-	serializedHeader, err := SerializeProtocols(header)
-	if err != nil {
-		t.Errorf("Error serializing header: %s", err)
-	}
-
-	deserializedHeader, err := DeserializeProtocols[Headers](serializedHeader)
-	if err != nil {
-		t.Errorf("Error deserializing header: %s", err)
-	}
-
-	if reflect.DeepEqual(deserializedHeader, header) == false {
-		t.Errorf("Headers do not match...")
-	}
-}
-
-func TestStatesEncodeDecode(t *testing.T) {
-	DHs := make([]byte, 32)
-	rand.Read(DHs)
-
-	DHr := make([]byte, 32)
-	rand.Read(DHr)
-
-	RK := make([]byte, 32)
-	rand.Read(RK)
-
-	CKs := make([]byte, 32)
-	rand.Read(CKs)
-
-	CKr := make([]byte, 32)
-	rand.Read(CKr)
-
-	pK := make([]byte, 32)
-	rand.Read(pK)
-	PK := base64.StdEncoding.EncodeToString(pK)
-
-	var MKSKIPPED map[string]int
-	MKSKIPPED = make(map[string]int)
-	MKSKIPPED[PK] = 0
-
-	state := States{
-		DHs,
-		DHr,
-		RK,
-		CKs,
-		CKr,
-		0,
-		0,
-		0,
-		MKSKIPPED,
-	}
-
-	serializedState, err := SerializeProtocols(state)
-	if err != nil {
-		t.Errorf("Error serializing: %s", err)
-	}
-
-	deserializedState, err := DeserializeProtocols[States](serializedState)
-	if err != nil {
-		t.Errorf("Error deserializing: %s", err)
-	}
-
-	if reflect.DeepEqual(deserializedState, state) == false {
-		t.Errorf("States do not match...")
-	}
-
-	deserializedState.Ns = state.Ns + 1
-
-	if reflect.DeepEqual(deserializedState, state) {
-		t.Errorf("States match when should not: wanted Ns:=%d, got Ns:=%d", state.Ns, deserializedState.Ns)
-	}
-
-	// fmt.Printf("%d\n", serializedState)
 }

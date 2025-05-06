@@ -2,25 +2,31 @@ package main
 
 import (
 	"maze.io/x/crypto/x25519"
+	"golang.org/x/crypto/curve25519"
 	"crypto/rand"
 )
 
-func Init() (x25519.PublicKey, []byte, error) {
-	pk, err := x25519.GenerateKey(rand.Reader)
+func KeypairInit() x25519.PrivateKey {
+	privateKey, err := x25519.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	return *privateKey
+}
 
-	// TODO: store the private key
-
-	return pk.PublicKey, pk.Bytes(), err 
+func KeypairGetPublicKey(privateKey []byte) []byte {
+	publicKey, err := curve25519.X25519(privateKey, curve25519.Basepoint)
+	if err != nil {
+		panic(err)
+	}
+	return publicKey
 }
 
 
 // func Agree(peerPublicKeyRaw, privateKeyRaw []byte) [32]byte { // If needed in arrays not slices
-func Agree(peerPublicKeyRaw, privateKeyRaw []byte) []byte {
+func KeypairAgree(privateKey x25519.PrivateKey, peerPublicKeyRaw []byte) []byte {
 	var peerPublicKey x25519.PublicKey 
 	peerPublicKey.SetBytes(peerPublicKeyRaw)
-
-	var privateKey x25519.PrivateKey 
-	privateKey.SetBytes(privateKeyRaw)
 
 	skSlice := privateKey.Shared(&peerPublicKey)
 
