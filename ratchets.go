@@ -1,19 +1,21 @@
 package main
 
 import (
-	"io"
-	"crypto/sha512"
-	"crypto/sha256"
-	"golang.org/x/crypto/hkdf"
 	"crypto/hmac"
+	"crypto/sha256"
+	"crypto/sha512"
+	"io"
+
+	"golang.org/x/crypto/hkdf"
 )
 
 func AliceInit(
-	state *States, 
-	SK []byte, 
+	state *States,
+	SK []byte,
 	bobPubKey []byte,
+	keystorePath string,
 ) {
-	state.DHs = GENERATE_DH()
+	state.DHs = GENERATE_DH(keystorePath)
 	state.DHr = bobPubKey
 	state.RK, state.CKs = KDF_RK(SK, DH(state.DHs, state.DHr))
 	state.CKr = nil
@@ -29,19 +31,19 @@ func BobInit(
 	bobKeypair Keypairs,
 ) {
 	state.DHs = bobKeypair
-        state.DHr = nil
-        state.RK = SK
-        state.CKs = nil
-        state.CKr = nil
-        state.Ns = 0
-        state.Nr = 0
-        state.PN = 0
+	state.DHr = nil
+	state.RK = SK
+	state.CKs = nil
+	state.CKr = nil
+	state.Ns = 0
+	state.Nr = 0
+	state.PN = 0
 	state.MKSKIPPED = make(map[string]int)
 }
 
-func GENERATE_DH() Keypairs {
+func GENERATE_DH(keystorePath string) Keypairs {
 	var keypairs Keypairs
-	keypairs.Init()
+	keypairs.Init(keystorePath)
 	return keypairs
 }
 
@@ -66,13 +68,14 @@ func KDF_RK(RK, DHOut []byte) ([]byte, []byte) {
 }
 
 func DH(keypairs Keypairs, pubKey []byte) []byte {
-	return keypairs.Agree(pubKey)
+	sk, _ := keypairs.Agree(pubKey)
+	return sk
 }
 
 func Encrypt(state *States, data []byte, AD []byte) (Headers, []byte) {
 	var mk = make([]byte, 0)
 	state.CKs, mk = KDF_CK(state.CKs)
-	header := Headers {
+	header := Headers{
 		state.DHs,
 		state.PN,
 		state.Ns,

@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -18,24 +17,22 @@ type Keystore struct {
 	connection *sql.DB
 }
 
-func (k *Keystore) Init(tableName string) error {
-	db, err := sql.Open("sqlite3", "./foo.db")
+func (k *Keystore) Init(filename string) error {
+	db, err := sql.Open("sqlite3", filename)
 	if err != nil {
 		return err
 	}
 
 	k.connection = db
 
-	sqlStmt := fmt.Sprintf(`
-	CREATE TABLE IF NOT EXISTS %s ( 
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS _crypto ( 
 	id INTEGER PRIMARY KEY AUTOINCREMENT, 
 	pnt TEXT NOT NULL UNIQUE, 
-	pk BLOB NOT NULL, 
-	_pk BLOB NOT NULL, 
+	prKey BLOB NOT NULL, 
+	pubKey BLOB NOT NULL, 
 	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`, tableName)
-
-	_, err = db.Exec(sqlStmt)
+	)`)
 
 	if err != nil {
 		return err
@@ -43,22 +40,47 @@ func (k *Keystore) Init(tableName string) error {
 	return err
 }
 
-func (k *Keystore) Store(keypair Keypairs) error {
-	prKey, pubKey := keypair.PrivateKey.Bytes(), keypair.PrivateKey.PublicKey.Bytes()
-
+func (k *Keystore) Store(prKey []byte, pubKey []byte, pnt string) error {
 	tx, err := k.connection.Begin()
 	if err != nil {
 		return err
 	}
 
-	sqlInsertStmt := fmt.Sprintf(`
-
-	)`, tableName)
-
-	stmt, err := tx.Prepare(sqlInsertStmt)
+	stmt, err := tx.Prepare(`INSERT INTO _crypto (pnt, prKey, pubKey) values(?, ?, ?)`)
 	if err != nil {
 		return err
 	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(pnt, prKey, pubKey)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (k *Keystore) Fetch(pnt string) ([]byte, []byte, error) {
+	stmt, err := k.connection.Prepare("select prKey, pubKey from _crypto where pnt = ?")
+	var prKey, pubKey []byte
+
+	if err != nil {
+		return prKey, pubKey, err
+	}
+
+	defer stmt.Close()
+
+	err = stmt.QueryRow(pnt).Scan(&prKey, &pubKey)
+	if err != nil {
+		return prKey, pubKey, err
+	}
+	return prKey, pubKey, nil
 }
 
 func (k *Keystore) Close() {

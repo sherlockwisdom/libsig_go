@@ -1,23 +1,23 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
-	"encoding/gob"
 	"encoding/binary"
+	"encoding/gob"
+	"fmt"
 )
 
 type Headers struct {
 	Dh Keypairs
 	Pn uint32
-	N uint32
+	N  uint32
 }
 
 type States struct {
 	DHs Keypairs
 	DHr []byte
 
-	RK []byte
+	RK  []byte
 	CKs []byte
 	CKr []byte
 
@@ -40,6 +40,7 @@ type ProtocolsHeaders interface {
 }
 
 func (s States) GobEncode() ([]byte, error) {
+	// TODO: encode keystore path and pnt
 	var mkSkippedBuffer bytes.Buffer
 	enc := gob.NewEncoder(&mkSkippedBuffer)
 	err := enc.Encode(s.MKSKIPPED)
@@ -48,7 +49,7 @@ func (s States) GobEncode() ([]byte, error) {
 	}
 
 	// Assuming everything is 32 bytes
-	Len := (32 * 6) + (4*3) + len(mkSkippedBuffer.Bytes())
+	Len := (32 * 6) + (4 * 3) + len(mkSkippedBuffer.Bytes())
 
 	result := make([]byte, Len)
 	copy(result[0:32], s.DHs.PrivateKey.Bytes())
@@ -62,7 +63,7 @@ func (s States) GobEncode() ([]byte, error) {
 	binary.BigEndian.PutUint32(result[192:196], s.Ns)
 	binary.BigEndian.PutUint32(result[196:200], s.Nr)
 	binary.BigEndian.PutUint32(result[200:204], s.PN)
-	copy(result[204:(204 + len(mkSkippedBuffer.Bytes()))], mkSkippedBuffer.Bytes())
+	copy(result[204:(204+len(mkSkippedBuffer.Bytes()))], mkSkippedBuffer.Bytes())
 
 	if len(result) != (204 + len(mkSkippedBuffer.Bytes())) {
 		return result, fmt.Errorf(
@@ -72,14 +73,14 @@ func (s States) GobEncode() ([]byte, error) {
 		)
 	}
 
-	return result, nil 
+	return result, nil
 }
 
 func (s *States) GobDecode(data []byte) error {
-	if len(data) < (32 * 6) + (4*3) {
+	if len(data) < (32*6)+(4*3) {
 		return fmt.Errorf(
 			"Not enough data to build state: wanted: %d, got: %d",
-			(32 * 6) + (4*3),
+			(32*6)+(4*3),
 			len(data),
 		)
 	}
@@ -139,7 +140,7 @@ func (m *States) Deserialize(buffer bytes.Buffer) error {
 }
 
 func (m Headers) Serialize() ([]byte, error) {
-	result := make([]byte, (4*2) + len(m.Dh.PrivateKey.PublicKey.Bytes()))
+	result := make([]byte, (4*2)+len(m.Dh.PrivateKey.PublicKey.Bytes()))
 	binary.LittleEndian.PutUint32(result[0:4], m.N)
 	binary.LittleEndian.PutUint32(result[4:8], m.Pn)
 	copy(result[8:], m.Dh.PrivateKey.PublicKey.Bytes())

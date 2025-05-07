@@ -1,27 +1,41 @@
 package main
 
 import (
-	"maze.io/x/crypto/x25519"
-	"golang.org/x/crypto/curve25519"
 	"crypto/rand"
+	"fmt"
+
+	"golang.org/x/crypto/curve25519"
+	"maze.io/x/crypto/x25519"
 )
 
 type KeypairsInterface interface {
-	Init() 
-	GetPublicKey([]byte) 
-	Agree([]byte) []byte
+	Init()
+	GetPublicKey([]byte)
+	Agree([]byte) ([]byte, error)
 }
 
 type Keypairs struct {
-	PrivateKey x25519.PrivateKey
+	PrivateKey   x25519.PrivateKey
+	KeystorePath string
+	Pnt          string
 }
 
-func (k *Keypairs) Init() {
+func (k *Keypairs) Init(keystorePath string) {
+	pnt := "pnt"
+
+	k.KeystorePath = keystorePath
+	k.Pnt = pnt
+
 	privateKey, err := x25519.GenerateKey(rand.Reader)
 	if err != nil {
 		panic(err)
 	}
-	k.PrivateKey = *privateKey
+	// k.PrivateKey = *privateKey
+
+	var keystore = Keystore{}
+	keystore.Init(keystorePath)
+	keystore.Store(privateKey.Bytes(), privateKey.PublicKey.Bytes(), "pnt")
+	k.PrivateKey.PublicKey.SetBytes(privateKey.PublicKey.Bytes())
 }
 
 func (k *Keypairs) GetPublicKey() {
@@ -32,10 +46,21 @@ func (k *Keypairs) GetPublicKey() {
 	k.PrivateKey.PublicKey.SetBytes(publicKey)
 }
 
-
-func (k Keypairs) Agree(peerPublicKeyRaw []byte) []byte {
-	var peerPublicKey x25519.PublicKey 
+func (k Keypairs) Agree(peerPublicKeyRaw []byte) ([]byte, error) {
+	var peerPublicKey x25519.PublicKey
 	peerPublicKey.SetBytes(peerPublicKeyRaw)
 
-	return k.PrivateKey.Shared(&peerPublicKey)
+	var keystore = Keystore{}
+	keystore.Init(k.KeystorePath)
+
+	priKey, _, err := keystore.Fetch(k.Pnt)
+
+	fmt.Println(priKey)
+
+	if err != nil {
+		return []byte{}, err
+	}
+
+	k.PrivateKey.SetBytes(priKey)
+	return k.PrivateKey.Shared(&peerPublicKey), nil
 }
