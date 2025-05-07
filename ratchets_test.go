@@ -14,17 +14,20 @@ import (
 func TestRatchets(t *testing.T) {
 	var aliceState States
 
-	alice, bob := KeypairInit(), KeypairInit()
-	sk := KeypairAgree(alice.Bytes(), bob.PublicKey.Bytes())
-	sk1 := KeypairAgree(bob.Bytes(), alice.PublicKey.Bytes())
+	var alice, bob Keypairs
+	alice.Init()
+	bob.Init()
+
+	sk := alice.Agree(bob.PrivateKey.PublicKey.Bytes())
+	sk1 := bob.Agree(alice.PrivateKey.PublicKey.Bytes())
 
 	if !bytes.Equal(sk, sk1) {
 		t.Errorf("Shared keys don't match: sk=%d, sk1=%d", sk, sk1)
 	}
 
-	AliceInit(&aliceState, sk, bob.PublicKey.Bytes())
+	AliceInit(&aliceState, sk, bob.PrivateKey.PublicKey.Bytes())
 
-	if aliceState.DHs == nil {
+	if aliceState.DHs.PrivateKey.Bytes() == nil {
 		t.Errorf("aliceState.DHs is nil!")
 	}
 }

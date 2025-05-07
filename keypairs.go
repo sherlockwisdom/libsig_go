@@ -6,31 +6,36 @@ import (
 	"crypto/rand"
 )
 
-func KeypairInit() x25519.PrivateKey {
+type KeypairsInterface interface {
+	Init() 
+	GetPublicKey([]byte) 
+	Agree([]byte) []byte
+}
+
+type Keypairs struct {
+	PrivateKey x25519.PrivateKey
+}
+
+func (k *Keypairs) Init() {
 	privateKey, err := x25519.GenerateKey(rand.Reader)
 	if err != nil {
 		panic(err)
 	}
-	return *privateKey
+	k.PrivateKey = *privateKey
 }
 
-func KeypairGetPublicKey(privateKey []byte) []byte {
-	publicKey, err := curve25519.X25519(privateKey, curve25519.Basepoint)
+func (k *Keypairs) GetPublicKey() {
+	publicKey, err := curve25519.X25519(k.PrivateKey.Bytes(), curve25519.Basepoint)
 	if err != nil {
 		panic(err)
 	}
-	return publicKey
+	k.PrivateKey.PublicKey.SetBytes(publicKey)
 }
 
 
-func KeypairAgree(privateKeyRaw, peerPublicKeyRaw []byte) []byte {
+func (k Keypairs) Agree(peerPublicKeyRaw []byte) []byte {
 	var peerPublicKey x25519.PublicKey 
 	peerPublicKey.SetBytes(peerPublicKeyRaw)
 
-	var privateKey x25519.PrivateKey
-	privateKey.SetBytes(privateKeyRaw)
-	skSlice := privateKey.Shared(&peerPublicKey)
-
-	// return *(*[32]byte)(skSlice) // return in arrays not slices
-	return skSlice
+	return k.PrivateKey.Shared(&peerPublicKey)
 }

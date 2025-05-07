@@ -26,9 +26,9 @@ func AliceInit(
 func BobInit(
 	state *States,
 	SK []byte,
-	bobPrivateKey []byte,
+	bobKeypair Keypairs,
 ) {
-	state.DHs = bobPrivateKey
+	state.DHs = bobKeypair
         state.DHr = nil
         state.RK = SK
         state.CKs = nil
@@ -39,9 +39,10 @@ func BobInit(
 	state.MKSKIPPED = make(map[string]int)
 }
 
-func GENERATE_DH() []byte {
-	pk := KeypairInit()
-	return pk.Bytes()
+func GENERATE_DH() Keypairs {
+	var keypairs Keypairs
+	keypairs.Init()
+	return keypairs
 }
 
 func KDF_RK(RK, DHOut []byte) ([]byte, []byte) {
@@ -64,8 +65,8 @@ func KDF_RK(RK, DHOut []byte) ([]byte, []byte) {
 	return rk, ck
 }
 
-func DH(privKey []byte, pubKey []byte) []byte {
-	return KeypairAgree(privKey, pubKey)
+func DH(keypairs Keypairs, pubKey []byte) []byte {
+	return keypairs.Agree(pubKey)
 }
 
 func Encrypt(state *States, data []byte, AD []byte) (Headers, []byte) {

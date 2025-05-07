@@ -12,12 +12,18 @@ import (
 )
 
 func TestDeterministicPublicKeys(t *testing.T) {
-	privKey := KeypairInit()
-	value := privKey.Bytes()
+	var keypair Keypairs
+	keypair.Init()
+	value := keypair.PrivateKey.Bytes()
 
-	pubKey := KeypairGetPublicKey(value) 
+	var keypair1 Keypairs
+	keypair1.PrivateKey.SetBytes(value)
+	keypair1.GetPublicKey() 
 
-	if !bytes.Equal(pubKey, privKey.PublicKey.Bytes()) {
-		t.Errorf("Pub keys differ! \n\twanted %d, \n\tgot %d", value, pubKey)
+	if !bytes.Equal(
+		keypair1.PrivateKey.PublicKey.Bytes(), 
+		keypair.PrivateKey.PublicKey.Bytes(),
+	) {
+		t.Errorf("Pub keys differ! \n\twanted %d, \n\tgot %d", value, keypair1.PrivateKey.PublicKey.Bytes())
 	}
 }

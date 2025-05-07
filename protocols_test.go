@@ -9,15 +9,25 @@ import (
 )
 
 func TestSK(t *testing.T) {
-	pk := KeypairInit()
-	pk1 := KeypairInit()
+	var keypairs Keypairs
+	keypairs.Init()
 
-	if bytes.Equal(pk.PublicKey.Bytes(), pk1.PublicKey.Bytes()) {
-		t.Errorf("PK are equal: got %d, %d", pk.Bytes(), pk1.Bytes())
+	var keypairs1 Keypairs
+	keypairs1.Init()
+
+	if bytes.Equal(
+		keypairs.PrivateKey.PublicKey.Bytes(), 
+		keypairs1.PrivateKey.PublicKey.Bytes(),
+	) {
+		t.Errorf(
+			"PK are equal: got %d, %d", 
+			keypairs.PrivateKey.Bytes(), 
+			keypairs1.PrivateKey.Bytes(),
+		)
 	}
 
-	sk := KeypairAgree(pk.Bytes(), pk1.PublicKey.Bytes())
-	sk1 := KeypairAgree(pk1.Bytes(), pk.PublicKey.Bytes())
+	sk := keypairs.Agree(keypairs1.PrivateKey.PublicKey.Bytes())
+	sk1 := keypairs1.Agree(keypairs.PrivateKey.PublicKey.Bytes())
 
 	if bytes.Equal(sk, sk1) == false {
 		t.Errorf("SK not equal: got %s, want: %s", sk, sk1)
@@ -25,11 +35,11 @@ func TestSK(t *testing.T) {
 }
 
 func TestHeadersEncodeDecode(t *testing.T) {
-	DH := make([]byte, 32)
-	rand.Read(DH)
+	var keypairs Keypairs
+	keypairs.Init()
 
 	var header = Headers {
-		DH,
+		keypairs,
 		0,
 		0,
 	}
@@ -45,14 +55,17 @@ func TestHeadersEncodeDecode(t *testing.T) {
 		t.Errorf("Error deserializing header: %s", err)
 	}
 
-	if reflect.DeepEqual(header1, header) == false {
+	if !bytes.Equal(
+		header1.Dh.PrivateKey.PublicKey.Bytes(), 
+		header.Dh.PrivateKey.PublicKey.Bytes(), 
+	) {
 		t.Errorf("Headers do not match: wanted: %d, got: %d", header.Dh, header1.Dh)
 	}
 }
 
 func TestStatesEncodeDecode(t *testing.T) {
-	DHs := make([]byte, 32)
-	rand.Read(DHs)
+	var keypairs Keypairs
+	keypairs.Init()
 
 	DHr := make([]byte, 32)
 	rand.Read(DHr)
@@ -75,7 +88,7 @@ func TestStatesEncodeDecode(t *testing.T) {
 	MKSKIPPED[PK] = 0
 
 	state := States{
-		DHs,
+		keypairs,
 		DHr,
 		RK,
 		CKs,
@@ -98,6 +111,23 @@ func TestStatesEncodeDecode(t *testing.T) {
 	}
 
 	if reflect.DeepEqual(state1, state) == false {
+		if !bytes.Equal(state.DHs.PrivateKey.Bytes(), state1.DHs.PrivateKey.Bytes()) {
+			t.Errorf(
+				"States do not match: DHs.Private key wanted: %d, got: %d",
+				state.DHs.PrivateKey.Bytes(),
+				state1.DHs.PrivateKey.Bytes(),
+			)
+		}
+		if !bytes.Equal(state.DHs.PrivateKey.PublicKey.Bytes(), state1.DHs.PrivateKey.PublicKey.Bytes()) {
+			t.Errorf(
+				"States do not match: DHs.Public key wanted: %d, got: %d",
+				state.DHs.PrivateKey.PublicKey.Bytes(),
+				state1.DHs.PrivateKey.PublicKey.Bytes(),
+			)
+		}
+		if !bytes.Equal(state.DHr, state1.DHr) {
+			t.Errorf("States do not match: DHr key wanted: %d, got: %d", state.DHr, state1.DHr)
+		}
 		t.Errorf("States do not match...")
 	}
 
